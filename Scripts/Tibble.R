@@ -22,3 +22,4 @@ tidyData <- significant_rows %>%
 extracted_columns <- tidyData[, c("GeneID", "log2(FC)")]
 glimpse(extracted_columns)
 
+library(ggplot2)
