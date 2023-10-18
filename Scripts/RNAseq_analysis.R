@@ -1,7 +1,8 @@
+#loading libraries
 library(tidyverse)
 library(here)
 
-# Reading data
+# Reading dataset
 RNAseq = read_csv2(here("Data", "RNAseq.csv"))
 glimpse(RNAseq)
 
@@ -12,10 +13,10 @@ library(dplyr)
 significant_rows <- filter(RNAseq, `P-value` < 0.05)
 glimpse(significant_rows)
 
-#Filter great log2FC values
-tidyData <- significant_rows %>%
-  filter(`log2(FC)`<-1) %>%
-  filter(`log2(FC)`>1)
+#Filter log2FC values
+tidyData<-significant_rows %>%
+  filter(`log2(FC)`<(-1)|`log2(FC)`>1)
+glimpse(tidyData)
 
 #Choosing colums I want to work with
 extracted_columns <- tidyData[, c("GeneID", "log2(FC)")]
