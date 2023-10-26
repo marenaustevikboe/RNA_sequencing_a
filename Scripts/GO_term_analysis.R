@@ -7,7 +7,11 @@ library(msigdbr)
 library(org.Hs.eg.db)
 library(ggplot2)
 library(magrittr)
+
+BiocManager::install("enrichplot")
 library(enrichplot)
+#Do update
+a
 
 BiocManager::install("pathview")
 library(pathview)
@@ -40,6 +44,7 @@ glimpse(gene_list)
 # sort the list in decreasing order (required for clusterProfiler)
 gene_list = sort(gene_list, decreasing = TRUE)
 
+#Perform Go term analysis
 gse <- gseGO(geneList=gene_list, 
              ont ="ALL", 
              keyType = "ENSEMBL", 
@@ -53,8 +58,72 @@ gse <- gseGO(geneList=gene_list,
 
 glimpse(gse)
 
+#Extracting column with GO descriptions
+GO_descriptions <- gse$Description
+# Convert list to a data frame (if needed)
+GO_descriptions_df <- as.data.frame(GO_descriptions)
+# Save the data frame to a text file
+write.table(GO_descriptions_df, file = "regulated_GO_terms.txt")
+
+#Selecting results related with GO-term including fats, lipids or cholesterol
+Selected_GO_terms <- gse %>% filter(str_detect(Description, "lipid|PIP3|fat|fatty|cholesterol"))
+# Example: View only the "column1" and "column2" from your dataset
+subset_df <- Selected_GO_terms[, c("Description")]
+subset_df
+
+#removing GO terms containing word "fate" or "Fate"
+Selected_GO_terms_filtered <- Selected_GO_terms %>% filter(!str_detect(Description, "fate"))
+subset_df_filtered <- Selected_GO_terms_filtered[, c("Description")]
+subset_df_filtered
+
+#Creating dotplot
 require(DOSE)
-dotplot <- dotplot(gse, showCategory=10, split=".sign") + facet_grid(.~.sign)
-# Adjust the size of the y-axis text
-dotplot <- dotplot + theme(axis.text.y = element_text(size = 5))
+dotplot <- dotplot(Selected_GO_terms_filtered, showCategory=10, split=".sign") + facet_grid(.~.sign)
 dotplot
+
+# Adjust the size of the y-axis text
+dotplot <- dotplot + theme(axis.text.y = element_text(size = 6))
+dotplot
+
+#Saving dotplot
+ggplot2::ggsave(file.path("Plots", "SRP123625_GO_term_Analysis_Lipid_Fat_Cholesterol.png"),
+                plot = dotplot)
+
+#Making rigdeplot
+ridgeplot_2 <- ridgeplot(Selected_GO_terms_filtered) + labs(x = "enrichment distribution")
+ridgeplot_2
+# Adjust the size of the y-axis text
+ridgeplot_2 <- ridgeplot_2 + theme(axis.text.y = element_text(size = 7))
+ridgeplot_2
+
+#Saving plot
+ggplot2::ggsave(file.path("Plots", "SRP123625_GO_term_lipid_fat_cholesterol_rigdeplot.png"),
+                plot = ridgeplot_2)
+
+#Making a category net plot
+#categorySize can be either 'pvalue' or 'geneNum'
+cnetplot(Selected_GO_terms_filtered, categorySize="pvalue", foldChange=gene_list, showCategory = 3)
+
+#Selecting results related with GO-term including insulin or PIP3
+Selected_GO_terms_2 <- gse %>% filter(str_detect(Description, "PIP3|insulin"))
+dotplot2 <- dotplot(Selected_GO_terms_2, showCategory=10, split=".sign") + facet_grid(.~.sign)
+dotplot2
+#Saving dotplot
+ggplot2::ggsave(file.path("Plots", "SRP123625_GO_term_insulin.png"),
+                plot = dotplot2)
+
+
+#Selecting results related with GO-term including stem cell
+Selected_GO_terms_3 <- gse %>% filter(str_detect(Description, "stem cell"))
+#making dotplot
+dotplot3 <- dotplot(Selected_GO_terms_3, showCategory=10, split=".sign") + facet_grid(.~.sign)
+dotplot3
+#Saving dotplot
+ggplot2::ggsave(file.path("Plots", "SRP123625_GO_term_stem_cell.png"),
+                plot = dotplot3)
+
+#Making rigdeplot
+ridgeplot <- ridgeplot(Selected_GO_terms_3) + labs(x = "enrichment distribution")
+#Saving plot
+ggplot2::ggsave(file.path("Plots", "SRP123625_GO_term_stem_cell_rigdeplot.png"),
+                plot = ridgeplot)
